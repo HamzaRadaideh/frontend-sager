@@ -105,7 +105,7 @@ export const useDroneStore = create((set, get) => ({
         const feats = [];
         const { drones } = get();
         Object.values(drones).forEach((d) => {
-            if (d.history.length > 1) {
+            if (d.history.length > 1 && canFly(d.reg)) {
                 feats.push({
                     type: "Feature",
                     geometry: { type: "LineString", coordinates: d.history.map((h) => h.coord) },
