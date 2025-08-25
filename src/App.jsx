@@ -1,19 +1,24 @@
-import Header from "./components/Header";
-import Sidebar from "./components/Sidebar";
-import DroneMap from "./components/DroneMap";
-import RedCounter from "./components/RedCounter";
+// App.jsx
+import React from 'react';
+import Layout from './components/layout/Layout';
+import DroneMap from './components/map/DroneMap';
+import Sidebar from './components/sidebar/Sidebar';
+import RedCounter from './components/ui/RedCounter';
+import { useSocket } from './hooks/useSocket';
 
 export default function App() {
+  // Initialize socket connection
+  useSocket();
+
   return (
-    <div style={{ height: "100vh", width: "100vw", display: "flex", flexDirection: "column", background: "#0b0f14" }}>
-      <Header />
-      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+    <Layout>
+      <div className="flex flex-1 min-h-0">
         <Sidebar />
-        <div style={{ flex: 1, position: "relative" }}>
+        <div className="flex-1 relative">
           <DroneMap />
         </div>
       </div>
       <RedCounter />
-    </div>
+    </Layout>
   );
 }

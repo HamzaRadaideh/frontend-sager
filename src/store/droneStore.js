@@ -1,89 +1,113 @@
+// store/droneStore.js
 import { create } from "zustand";
-
-function canFly(reg) {
-    // Green only if registration after the dash starts with 'B' (e.g., SD-B…)
-    if (!reg) return false;
-    const idx = reg.indexOf("-");
-    const ch = idx >= 0 && reg[idx + 1] ? reg[idx + 1].toUpperCase() : "";
-    return ch === "B";
-}
+import { canFly } from "../utils/droneUtils";
 
 export const useDroneStore = create((set, get) => ({
     drones: {},          // id -> { id, props, coords, color, firstSeen, lastSeen }
     selectedId: null,
 
-    upsertFeature: (f) => {
-        if (!f || f?.geometry?.type !== "Point") return;
-        const p = f.properties || {};
-        const id = `${p.serial || "UNKNOWN"}_${p.registration || "NA"}`;
-        const coord = f.geometry.coordinates;
+    upsertFeature: (feature) => {
+        if (!feature || feature?.geometry?.type !== "Point") return;
+
+        const properties = feature.properties || {};
+        const id = `${properties.serial || "UNKNOWN"}_${properties.registration || "NA"}`;
+        const coord = feature.geometry.coordinates;
 
         set((state) => {
-            const map = { ...state.drones };
-            const existing = map[id];
+            const drones = { ...state.drones };
+            const existing = drones[id];
             const now = Date.now();
-            const color = canFly(p.registration) ? "#22c55e" : "#ef4444";
+            const color = canFly(properties.registration) ? "#22c55e" : "#ef4444";
 
             if (!existing) {
-                map[id] = {
+                drones[id] = {
                     id,
-                    props: p,
+                    props: properties,
                     coords: [coord],
                     color,
                     firstSeen: now,
                     lastSeen: now,
                 };
             } else {
-                existing.props = { ...existing.props, ...p };
-                const arr = existing.coords;
-                const last = arr[arr.length - 1];
-                if (!last || last[0] !== coord[0] || last[1] !== coord[1]) {
-                    arr.push(coord);
-                    if (arr.length > 500) arr.shift(); // keep trail short
+                existing.props = { ...existing.props, ...properties };
+                const coords = existing.coords;
+                const lastCoord = coords[coords.length - 1];
+
+                // Only add new coordinate if it's different
+                if (!lastCoord || lastCoord[0] !== coord[0] || lastCoord[1] !== coord[1]) {
+                    coords.push(coord);
+                    if (coords.length > 500) coords.shift(); // Keep trail manageable
                 }
+
                 existing.color = color;
                 existing.lastSeen = now;
             }
-            return { drones: map };
+
+            return { drones };
         });
     },
 
     select: (id) => set({ selectedId: id }),
+
+    clearSelection: () => set({ selectedId: null }),
+
     clear: () => set({ drones: {}, selectedId: null }),
 
+    // Get all drones as GeoJSON points
     getPoints: () => {
-        const feats = [];
+        const features = [];
         const { drones } = get();
-        Object.values(drones).forEach((d) => {
-            const last = d.coords[d.coords.length - 1];
-            feats.push({
+
+        Object.values(drones).forEach((drone) => {
+            const lastCoord = drone.coords[drone.coords.length - 1];
+            features.push({
                 type: "Feature",
-                geometry: { type: "Point", coordinates: last },
-                properties: { id: d.id, ...d.props, color: d.color, firstSeen: d.firstSeen },
+                geometry: { type: "Point", coordinates: lastCoord },
+                properties: {
+                    id: drone.id,
+                    ...drone.props,
+                    color: drone.color,
+                    firstSeen: drone.firstSeen
+                },
             });
         });
-        return { type: "FeatureCollection", features: feats };
+
+        return { type: "FeatureCollection", features };
     },
 
+    // Get all drone paths as GeoJSON lines
     getLines: () => {
-        const feats = [];
+        const features = [];
         const { drones } = get();
-        Object.values(drones).forEach((d) => {
-            if (d.coords.length > 1) {
-                feats.push({
+
+        Object.values(drones).forEach((drone) => {
+            if (drone.coords.length > 1) {
+                features.push({
                     type: "Feature",
-                    geometry: { type: "LineString", coordinates: d.coords },
-                    properties: { id: d.id, color: d.color },
+                    geometry: { type: "LineString", coordinates: drone.coords },
+                    properties: { id: drone.id, color: drone.color },
                 });
             }
         });
-        return { type: "FeatureCollection", features: feats };
+
+        return { type: "FeatureCollection", features };
     },
 
+    // Count red (unauthorized) drones
     redCount: () => {
         const { drones } = get();
-        let c = 0;
-        for (const d of Object.values(drones)) if (d.color === "#ef4444") c++;
-        return c;
+        return Object.values(drones).filter(drone => drone.color === "#ef4444").length;
+    },
+
+    // Get drone by ID
+    getDrone: (id) => {
+        const { drones } = get();
+        return drones[id];
+    },
+
+    // Get all drones as array
+    getAllDrones: () => {
+        const { drones } = get();
+        return Object.values(drones);
     },
 }));
