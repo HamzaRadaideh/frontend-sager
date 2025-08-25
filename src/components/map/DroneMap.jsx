@@ -5,6 +5,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useDroneStore } from "../../store/droneStore";
 import { MAP_CONFIG, DRONE_ICONS, COLORS } from "../../lib/constants";
 import { createArrowSVG } from "../../utils/droneUtils";
+// import { renderDronePopup } from "./renderDronePopup";
+
 
 export default function DroneMap() {
   const mapRef = useRef(null);
@@ -111,6 +113,8 @@ export default function DroneMap() {
             Flight Time: ${minutes}:${secs}
           </div>
         `;
+
+        // const html = renderDronePopup(properties);
 
         if (!popupRef.current) {
           popupRef.current = new maplibregl.Popup({ 

@@ -2,21 +2,19 @@
 import { useEffect } from "react";
 import { createSocket, onMessage, offMessage, disconnectSocket } from "../lib/socket";
 import { useDroneStore } from "../store/droneStore";
+import { assignTracks } from "../lib/tracker";
 
 export function useSocket() {
     const upsertFeature = useDroneStore((state) => state.upsertFeature);
 
     useEffect(() => {
-        const socket = createSocket();
+        createSocket();
 
         const handleMessage = (payload) => {
             console.log("Received socket message:", payload);
-            const features = payload?.features || [];
-
-            // Process each feature from the backend
-            features.forEach((feature) => {
-                upsertFeature(feature);
-            });
+            // stitch stable tracks client-side, then upsert
+            const tracked = assignTracks(payload?.features || []);
+            tracked.forEach(upsertFeature);
         };
 
         // Set up socket listeners

@@ -1,12 +1,9 @@
+// components/map/DronePopup.jsx
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { calculateFlightTime } from "../../utils/droneUtils";
 import { formatAltitude, formatFlightTime } from "../../utils/formatters";
 
-/**
- * Pure React component for a map popup.
- * You can render it to a string with renderDronePopup(...)
- */
 export default function DronePopup({ properties }) {
   const firstSeen = Number(properties?.firstSeen || Date.now());
   const flightSecs = calculateFlightTime(firstSeen);
@@ -41,11 +38,3 @@ export default function DronePopup({ properties }) {
   );
 }
 
-/**
- * Helper to use inside MapLibre popups.
- * Example:
- *   popup.setHTML(renderDronePopup(feature.properties));
- */
-export function renderDronePopup(properties) {
-  return ReactDOMServer.renderToStaticMarkup(<DronePopup properties={properties} />);
-}

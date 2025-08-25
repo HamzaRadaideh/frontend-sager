@@ -1,3 +1,4 @@
+// components/ui/Button.jsx
 import React from "react";
 
 const VARIANTS = {
@@ -18,7 +19,7 @@ const SIZES = {
 };
 
 export default function Button({
-  as: Tag = "button",
+  as = "button",
   variant = "primary",
   size = "md",
   className = "",
@@ -29,20 +30,24 @@ export default function Button({
   const variantCls = VARIANTS[variant] ?? VARIANTS.primary;
   const sizeCls = SIZES[size] ?? SIZES.md;
 
-  return (
-    <Tag
-      className={[
-        "inline-flex items-center justify-center gap-2 font-medium rounded-md",
-        "transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        sizeCls,
-        variantCls,
-        className,
-      ].join(" ")}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </Tag>
-  );
+const Tag = as;
+return React.createElement(
+  Tag,
+  {
+    className: [
+      "inline-flex items-center justify-center gap-2 font-medium rounded-md",
+      "transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900",
+      "disabled:opacity-50 disabled:pointer-events-none",
+      sizeCls,
+      variantCls,
+      className,
+    ].join(" "),
+    disabled,
+    ...props,
+  },
+  children
+);
+
+
+
 }

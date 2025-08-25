@@ -1,16 +1,18 @@
 // store/droneStore.js
 import { create } from "zustand";
-import { canFly } from "../utils/droneUtils";
+import { canFly, generateDroneId } from "../utils/droneUtils";
+import { MAP_CONFIG } from "../lib/constants";
 
 export const useDroneStore = create((set, get) => ({
-    drones: {},          // id -> { id, props, coords, color, firstSeen, lastSeen }
+    drones: {},
     selectedId: null,
 
     upsertFeature: (feature) => {
         if (!feature || feature?.geometry?.type !== "Point") return;
 
         const properties = feature.properties || {};
-        const id = `${properties.serial || "UNKNOWN"}_${properties.registration || "NA"}`;
+        // prefer stable id (from tracker or backend), else synthesize
+        const id = properties.id || generateDroneId(properties.serial, properties.registration);
         const coord = feature.geometry.coordinates;
 
         set((state) => {
@@ -33,10 +35,9 @@ export const useDroneStore = create((set, get) => ({
                 const coords = existing.coords;
                 const lastCoord = coords[coords.length - 1];
 
-                // Only add new coordinate if it's different
                 if (!lastCoord || lastCoord[0] !== coord[0] || lastCoord[1] !== coord[1]) {
                     coords.push(coord);
-                    if (coords.length > 500) coords.shift(); // Keep trail manageable
+                    if (coords.length > (MAP_CONFIG.MAX_TRAIL_LENGTH ?? 500)) coords.shift();
                 }
 
                 existing.color = color;
