@@ -8,9 +8,9 @@ const GREEN = "#22c55e";
 const RED = "#ef4444";
 
 // Keep history manageable
-const MAX_HISTORY = 200;        // cap per drone
-const MIN_TIME_MS = 500;        // ignore points that arrive too fast
-const MIN_DIST_M = 5;          // ignore micro-movements (< ~5m)
+const MAX_HISTORY = 200;  // cap per drone
+const MIN_TIME_MS = 500;  // ignore points that arrive too fast
+const MIN_DIST_M = 5;    // ignore micro-movements (< ~5m)
 
 /** =========================
  *  Helpers
@@ -30,36 +30,64 @@ function normalizeReg(reg) {
 
     const first = up[3];
     const second = up[4];
-
-    // Old rule: letters must be different, but allow BB as an explicit exception
-    if (first !== "B" && first === second) return null;
-
+    if (first !== "B" && first === second) return null; // keep BB as allowed
     return up;
 }
 
-/**
- * Extract the first class letter after '-' without relying on normalizeReg,
- * so color logic works even when normalization rejects the format.
- * Accepts SB- or SD-, letters A-D; duplicates allowed here.
- */
 function classLetter(reg) {
     const up = String(reg ?? "").trim().toUpperCase();
     const m = up.match(/^S[BD]-([ABCD])[ABCD]$/);
     return m ? m[1] : null;
 }
 
-// Only drones whose registration class is B are green.
 function canFly(reg) {
     return classLetter(reg) === "B";
 }
 
-// Fast equirectangular distance (meters) good for small deltas
+// Equirectangular distance (meters)
 function distMeters([lng1, lat1], [lng2, lat2]) {
     const toRad = (d) => (d * Math.PI) / 180;
-    const R = 6371000; // Earth radius (m)
+    const R = 6371000;
     const x = toRad(lng2 - lng1) * Math.cos(toRad((lat1 + lat2) / 2));
     const y = toRad(lat2 - lat1);
     return Math.hypot(x, y) * R;
+}
+
+// Bearing (degrees) p1 -> p2; 0=N, clockwise (Mapbox convention)
+function bearingDeg([lng1, lat1], [lng2, lat2]) {
+    const toRad = (d) => (d * Math.PI) / 180;
+    const toDeg = (r) => (r * 180) / Math.PI;
+    const φ1 = toRad(lat1), φ2 = toRad(lat2);
+    const λ1 = toRad(lng1), λ2 = toRad(lng2);
+    const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+    return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+/** Smooth heading from history:
+ *  - look back up to the last 3 *distinct* segments
+ *  - weight by segment length so long hops dominate
+ */
+function headingFromHistory(hist) {
+    if (!hist || hist.length < 2) return null;
+
+    let count = 0;
+    let vx = 0, vy = 0;
+    // scan backwards, collect up to 3 good segments
+    for (let i = hist.length - 1; i > 0 && count < 3; i--) {
+        const a = hist[i - 1].coord, b = hist[i].coord;
+        if (a[0] === b[0] && a[1] === b[1]) continue; // identical point, skip
+        const d = distMeters(a, b);
+        if (d < 1) continue; // ignore tiny wiggles
+        const br = bearingDeg(a, b) * Math.PI / 180;
+        // weight by distance
+        vx += Math.sin(br) * d;
+        vy += Math.cos(br) * d;
+        count++;
+    }
+    if (count === 0) return null;
+    const hdg = (Math.atan2(vx, vy) * 180 / Math.PI + 360) % 360; // back to deg, 0=N
+    return hdg;
 }
 
 /** =========================
@@ -87,7 +115,6 @@ export const useDroneStore = create((set, get) => ({
         if (!Array.isArray(coord) || coord.length < 2) return;
 
         const regNorm = normalizeReg(p.registration);
-        // Stable id: prefer normalized reg; otherwise fall back to raw reg/serial
         const id = regNorm ?? (p.registration ? String(p.registration).toUpperCase() : null) ?? p.serial ?? "UNKNOWN";
         const now = Date.now();
 
@@ -102,7 +129,7 @@ export const useDroneStore = create((set, get) => ({
             if (!existing) {
                 map[id] = {
                     id,
-                    reg: regNorm,           // may be null if format rejected; color logic doesn't depend on this
+                    reg: regNorm,
                     props: { ...p },
                     history: [{
                         coord: [coord[0], coord[1]],
@@ -114,12 +141,12 @@ export const useDroneStore = create((set, get) => ({
                     lastSeen: now,
                 };
                 pointsDirty = true;
-                linesDirty = true; // safe to mark; first update will build an empty/line or a 1-pt path
+                linesDirty = true;
             } else {
                 // merge props
                 existing.props = { ...existing.props, ...p };
 
-                // add point only if moved enough or waited enough (thinning)
+                // thinning
                 const hist = existing.history;
                 const last = hist[hist.length - 1];
                 const [lng, lat] = [coord[0], coord[1]];
@@ -134,22 +161,19 @@ export const useDroneStore = create((set, get) => ({
                         ts: now,
                         ...(p.altitude != null ? { altitude: Number(p.altitude) } : {}),
                     });
-                    // cap history
                     if (hist.length > MAX_HISTORY) {
                         hist.splice(0, hist.length - MAX_HISTORY);
                     }
                     pointsDirty = true;
-                    // Only draw lines for green drones (based on class letter, not normalization)
                     if (canFly(existing.reg ?? existing.props?.registration ?? p.registration)) {
                         linesDirty = true;
                     }
                 }
 
-                // handle color change (e.g., when class toggles), affects points + lines
                 if (existing.color !== nextColor) {
                     existing.color = nextColor;
                     pointsDirty = true;
-                    linesDirty = true; // green <-> red toggles inclusion in lines
+                    linesDirty = true;
                 }
 
                 existing.lastSeen = now;
@@ -181,7 +205,12 @@ export const useDroneStore = create((set, get) => ({
 
         const features = [];
         for (const d of Object.values(drones)) {
-            const last = d.history[d.history.length - 1];
+            const hist = d.history;
+            const last = hist[hist.length - 1];
+
+            // robust heading from path (0..360, 0 = north)
+            const hdg = headingFromHistory(hist);
+
             features.push({
                 type: "Feature",
                 geometry: { type: "Point", coordinates: last.coord },
@@ -191,7 +220,8 @@ export const useDroneStore = create((set, get) => ({
                     color: d.color,
                     firstSeen: d.firstSeen,
                     lastSeen: d.lastSeen,
-                    ...d.props,
+                    hdg,                // <— map uses this for rotation
+                    ...d.props,         // keep server props (yaw/altitude/Name/etc.)
                 },
             });
         }
@@ -206,7 +236,6 @@ export const useDroneStore = create((set, get) => ({
 
         const features = [];
         for (const d of Object.values(drones)) {
-            // Draw lines only for class B (green), regardless of duplicates like BB
             const regForColor = d.reg ?? d.props?.registration;
             if (d.history.length > 1 && canFly(regForColor)) {
                 features.push({
