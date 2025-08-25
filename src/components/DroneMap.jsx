@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { useDroneStore } from "../store/droneStore";
 import { startSocket } from "../lib/socket";
 
-const STYLE_URL = `https://api.maptiler.com/maps/darkmatter/style.json?key=${import.meta.env.VITE_MAP_KEY}`;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+
+// Pick a Mapbox style; dark-v11 fits your theme
+const STYLE_URL = "mapbox://styles/mapbox/dark-v11";
 
 function makeArrowSVG(color) {
   return `
@@ -28,7 +31,7 @@ export default function DroneMap() {
   useEffect(() => {
     startSocket();
 
-    const m = new maplibregl.Map({
+    const m = new mapboxgl.Map({
       container: mapRef.current,
       style: STYLE_URL,
       center: [35.9313, 31.9488],
@@ -39,8 +42,9 @@ export default function DroneMap() {
 
     const loadArrow = (name, color) => {
       const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(makeArrowSVG(color));
+      // loadImage + addImage still works in GL JS v3
       m.loadImage(url, (err, img) => {
-        if (!err && !m.hasImage(name)) m.addImage(name, img);
+        if (!err && img && !m.hasImage(name)) m.addImage(name, img);
       });
     };
 
@@ -82,7 +86,7 @@ export default function DroneMap() {
         paint: { "text-color": "#fff", "text-halo-color": "#000", "text-halo-width": 1 },
       });
 
-      // hover popup: altitude + flight time
+      // hover popup
       m.on("mousemove", "drones", (e) => {
         const f = e.features?.[0];
         if (!f) return;
@@ -97,16 +101,15 @@ export default function DroneMap() {
             Altitude: ${p.altitude ?? "-"} m<br/>
             Flight Time: ${mm}:${ss}
           </div>`;
-        if (!popupRef.current) popupRef.current = new maplibregl.Popup({ closeButton: false });
+        if (!popupRef.current) popupRef.current = new mapboxgl.Popup({ closeButton: false });
         popupRef.current.setLngLat(e.lngLat).setHTML(html).addTo(m);
       });
       m.on("mouseleave", "drones", () => popupRef.current?.remove());
 
-      // click drone on map -> select in list
+      // click to select
       m.on("click", "drones", (e) => {
         const f = e.features?.[0];
-        if (!f) return;
-        const id = f.properties?.id;
+        const id = f?.properties?.id;
         if (id) select(id);
       });
     });
@@ -129,12 +132,11 @@ export default function DroneMap() {
     };
   }, []);
 
-  // when selection changes, fly to it + emphasize
+  // emphasize selection
   useEffect(() => {
     if (!selectedId || !map.current) return;
-    const src = map.current.getSource("drones");
-    const data = src?._data; // FeatureCollection
-    const f = data?.features?.find((ft) => ft?.properties?.id === selectedId);
+    const fc = getPoints(); // safer than private _data
+    const f = fc.features.find((ft) => ft?.properties?.id === selectedId);
     const coord = f?.geometry?.coordinates;
     if (coord) map.current.flyTo({ center: coord, zoom: Math.max(13, map.current.getZoom()), speed: 1.6 });
 
