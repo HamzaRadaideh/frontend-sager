@@ -1,3 +1,4 @@
+// store/droneActions.js
 import { DRONE_CONFIG } from '../utils/constants.js';
 import { normalizeReg, canFly, shouldUpdatePoint, getDroneColor, headingFromHistory } from '../utils/droneUtils.js';
 import { distMeters, bearingDeg, blendAngles } from '../utils/geomerty.js';

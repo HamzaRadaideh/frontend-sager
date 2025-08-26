@@ -1,8 +1,8 @@
-// components/sidebar/SideBar.jsx
+// components/sidebar/Sidebar.jsx
 import dashboardIcon from "../../assets/dashboard-svgrepo-com-2.svg";
 import mapIcon from "../../assets/location-svgrepo-com-2.svg";
 
-export default function SideBar() {
+export default function Sidebar({ currentPath, onNavigate }) {
   const itemBase = {
     display: "flex",
     alignItems: "center",
@@ -12,6 +12,18 @@ export default function SideBar() {
     fontSize: 13,
     borderRadius: 10,
     cursor: "pointer",
+    transition: "all 0.2s ease",
+  };
+
+  const activeItemStyle = {
+    ...itemBase,
+    background: "#151a22",
+    color: "white",
+    boxShadow: "inset 0 0 0 1px #262e3f",
+  };
+
+  const handleNavigation = (path) => {
+    onNavigate(path);
   };
 
   return (
@@ -28,19 +40,35 @@ export default function SideBar() {
       }}
     >
       <div
-        style={{ ...itemBase, background: "transparent" }}
-        onClick={() => alert("Dashboard placeholder")}
+        style={currentPath === '/' ? activeItemStyle : itemBase}
+        onClick={() => handleNavigation('/')}
+        onMouseEnter={(e) => {
+          if (currentPath !== '/') {
+            e.target.style.background = "#151a2250";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (currentPath !== '/') {
+            e.target.style.background = "transparent";
+          }
+        }}
       >
         <img src={dashboardIcon} width={18} height={18} alt="dashboard" />
         <span>Dashboard</span>
       </div>
 
       <div
-        style={{
-          ...itemBase,
-          background: "#151a22",
-          color: "white",
-          boxShadow: "inset 0 0 0 1px #262e3f",
+        style={currentPath === '/map' ? activeItemStyle : itemBase}
+        onClick={() => handleNavigation('/map')}
+        onMouseEnter={(e) => {
+          if (currentPath !== '/map') {
+            e.target.style.background = "#151a2250";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (currentPath !== '/map') {
+            e.target.style.background = "transparent";
+          }
         }}
       >
         <img src={mapIcon} width={18} height={18} alt="map" />
