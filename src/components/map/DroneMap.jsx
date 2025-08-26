@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useDroneStore } from "../../store/droneStore";
-import { startSocket } from "../../lib/socket";
 import { MAP_CONFIG } from "../../utils/constants";
 import { useMapFollow } from "../../hooks/useMapFollow";
 import { useMapPopup } from "../../hooks/useMapPopup";
