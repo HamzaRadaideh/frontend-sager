@@ -1,7 +1,7 @@
-// components/Header.jsx
-import bellIcon from "../assets/bell.svg";
-import langIcon from "../assets/language-svgrepo-com.svg";
-import captureIcon from "../assets/capture-svgrepo-com.svg";
+// components/layout/Header.jsx
+import bellIcon from "../../assets/bell.svg";
+import langIcon from "../../assets/language-svgrepo-com.svg";
+import captureIcon from "../../assets/capture-svgrepo-com.svg";
 
 export default function Header() {
   const iconBtn = {
@@ -20,7 +20,7 @@ export default function Header() {
     <header
       style={{
         height: 56,
-        background: "#0e1116", // matte black
+        background: "#0e1116",
         color: "white",
         display: "flex",
         alignItems: "center",

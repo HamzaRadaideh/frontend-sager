@@ -1,6 +1,6 @@
-// components/FloatingSideBar.jsx
+// components/sidebar/FloatingSideBar.jsx
 import { useMemo } from "react";
-import { useDroneStore } from "../store/droneStore";
+import { useDroneStore } from "../../store/droneStore";
 
 export default function FloatingSideBar() {
   const drones = useDroneStore((s) => s.drones);
@@ -13,7 +13,7 @@ export default function FloatingSideBar() {
     <div
       style={{
         width: 320,
-        background: "#10151c",         // matte card
+        background: "#10151c",
         color: "white",
         borderRadius: 14,
         border: "1px solid #1f2735",
@@ -24,7 +24,6 @@ export default function FloatingSideBar() {
         maxHeight: "90vh",
       }}
     >
-      {/* Card header + tabs */}
       <div style={{ padding: "12px 14px", borderBottom: "1px solid #1b2130" }}>
         <div style={{ fontSize: 14, letterSpacing: .4, marginBottom: 6, opacity: .9 }}>
           DRONE FLYING
@@ -48,7 +47,6 @@ export default function FloatingSideBar() {
         </div>
       </div>
 
-      {/* List */}
       <div style={{ padding: 12, overflowY: "auto" }}>
         {list.map((d) => {
           const isSel = d.id === selectedId;

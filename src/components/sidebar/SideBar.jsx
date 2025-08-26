@@ -1,6 +1,6 @@
-// components/SideBar.jsx
-import dashboardIcon from "../assets/dashboard-svgrepo-com-2.svg";
-import mapIcon from "../assets/location-svgrepo-com-2.svg";
+// components/sidebar/SideBar.jsx
+import dashboardIcon from "../../assets/dashboard-svgrepo-com-2.svg";
+import mapIcon from "../../assets/location-svgrepo-com-2.svg";
 
 export default function SideBar() {
   const itemBase = {
@@ -18,7 +18,7 @@ export default function SideBar() {
     <aside
       style={{
         width: 220,
-        background: "#0e1116",         // matte black
+        background: "#0e1116",
         color: "white",
         padding: 16,
         borderRight: "1px solid #1b2130",
@@ -27,8 +27,6 @@ export default function SideBar() {
         gap: 12,
       }}
     >
-
-      {/* Nav items */}
       <div
         style={{ ...itemBase, background: "transparent" }}
         onClick={() => alert("Dashboard placeholder")}
@@ -44,15 +42,12 @@ export default function SideBar() {
           color: "white",
           boxShadow: "inset 0 0 0 1px #262e3f",
         }}
-        // you’re already on the Map page
       >
         <img src={mapIcon} width={18} height={18} alt="map" />
         <span>Map</span>
       </div>
 
       <div style={{ flex: 1 }} />
-
-      {/* tiny footer */}
       <div style={{ opacity: 0.6, fontSize: 11 }}>© Sager</div>
     </aside>
   );
