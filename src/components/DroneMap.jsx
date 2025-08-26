@@ -1,8 +1,12 @@
+// components/DroneMap.jsx
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useDroneStore } from "../store/droneStore";
 import { startSocket } from "../lib/socket";
+import FloatingSideBar from "./FloatingSideBar";
+import GreenCounter from "./GreenCounter";
+import RedCounter from "./RedCounter";
 
 // IMPORTANT: folder is "assets"
 import droneUrl from "../assets/drone.svg";
@@ -45,14 +49,12 @@ function tintSvgWhite(svg, size = 96) {
   if (!/width="/i.test(out) && !/height="/i.test(out)) {
     out = out.replace(/<svg([^>]*?)>/i, `<svg$1 width="${size}" height="${size}">`);
   }
-  // root defaults white
   out = out.replace(/<svg([^>]*)>/i, (m, attrs) => {
     const hasFill = /fill="/i.test(attrs);
     const hasStroke = /stroke="/i.test(attrs);
     const extra = `${hasFill ? "" : ` fill="#ffffff"`}${hasStroke ? "" : ` stroke="#ffffff"`}`;
     return `<svg${attrs}${extra}>`;
   });
-  // force non-none to white
   out = out
     .replace(/fill="(?!none)[^"]*"/gi, `fill="#ffffff"`)
     .replace(/stroke="(?!none)[^"]*"/gi, `stroke="#ffffff"`);
@@ -84,16 +86,16 @@ async function addCompositeIcon(map, name, circleColor, size = 88) {
   const cx = size / 2;
   const cy = size / 2;
 
-  // Colored disc (no ring)
+  // Colored disc
   const R = size * 0.32;
   ctx.fillStyle = circleColor;
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
   ctx.fill();
 
-  // Heading wedge OUTSIDE the disc (clearer and further forward)
-  const tipY  = cy - R - size * 0.24; // further from disc
-  const baseY = cy - R - size * 0.02; // just outside the disc edge
+  // Outside wedge for heading (Mapbox rotates the whole sprite)
+  const tipY  = cy - R - size * 0.26;
+  const baseY = cy - R - size * 0.02;
   const baseW = size * 0.18;
   ctx.beginPath();
   ctx.moveTo(cx, tipY);
@@ -102,7 +104,7 @@ async function addCompositeIcon(map, name, circleColor, size = 88) {
   ctx.closePath();
   ctx.fill();
 
-  // White drone glyph in the center (smaller)
+  // White drone glyph
   const DRONE_SIZE = size * 0.46;
   ctx.drawImage(imgEl, cx - DRONE_SIZE / 2, cy - DRONE_SIZE / 2, DRONE_SIZE, DRONE_SIZE);
 
@@ -288,7 +290,8 @@ export default function DroneMap() {
 
     // subscription: setData + follow selected + keep filters
     const unsub = useDroneStore.subscribe(() => {
-      if (!m.isStyleLoaded() || pushingRef.current) return;
+      const m = map.current;
+      if (!m || !m.isStyleLoaded() || pushingRef.current) return;
       pushingRef.current = true;
 
       requestAnimationFrame(() => {
@@ -369,5 +372,31 @@ export default function DroneMap() {
     }
   }, [selectedId, getPoints]);
 
-  return <div ref={mapRef} style={{ height: "100%", width: "100%" }} />;
+  return (
+    <div style={{ position: "relative", height: "100%", width: "100%" }}>
+      {/* Map */}
+      <div ref={mapRef} style={{ position: "absolute", inset: 0 }} />
+
+      {/* Floating card (top-left, over map) */}
+      <div style={{ position: "absolute", top: 16, left: 16, zIndex: 5 }}>
+        <FloatingSideBar />
+      </div>
+
+      {/* Counters (bottom-right, stacked) */}
+      <div
+        style={{
+          position: "absolute",
+          right: 16,
+          bottom: 16,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          zIndex: 6,
+        }}
+      >
+        <GreenCounter />
+        <RedCounter />
+      </div>
+    </div>
+  );
 }

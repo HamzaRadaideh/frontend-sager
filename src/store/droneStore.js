@@ -12,6 +12,10 @@ const MAX_HISTORY = 200;  // cap per drone
 const MIN_TIME_MS = 500;  // ignore points that arrive too fast
 const MIN_DIST_M = 5;    // ignore micro-movements (< ~5m)
 
+// Heading smoothing
+const HDG_MIN_SEG_M = 8;      // need at least ~8 m motion to trust a heading update
+const HDG_ALPHA = 0.65;   // EMA weight for the newest segment (0..1)
+
 /** =========================
  *  Helpers
  *  ========================= */
@@ -30,7 +34,7 @@ function normalizeReg(reg) {
 
     const first = up[3];
     const second = up[4];
-    if (first !== "B" && first === second) return null; // keep BB as allowed
+    if (first !== "B" && first === second) return null; // keep BB
     return up;
 }
 
@@ -64,7 +68,7 @@ function bearingDeg([lng1, lat1], [lng2, lat2]) {
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 
-/** Smooth heading from history:
+/** Smooth heading from history for fallback:
  *  - look back up to the last 3 *distinct* segments
  *  - weight by segment length so long hops dominate
  */
@@ -73,28 +77,38 @@ function headingFromHistory(hist) {
 
     let count = 0;
     let vx = 0, vy = 0;
-    // scan backwards, collect up to 3 good segments
     for (let i = hist.length - 1; i > 0 && count < 3; i--) {
         const a = hist[i - 1].coord, b = hist[i].coord;
-        if (a[0] === b[0] && a[1] === b[1]) continue; // identical point, skip
+        if (a[0] === b[0] && a[1] === b[1]) continue;
         const d = distMeters(a, b);
-        if (d < 1) continue; // ignore tiny wiggles
+        if (d < 1) continue;
         const br = bearingDeg(a, b) * Math.PI / 180;
-        // weight by distance
         vx += Math.sin(br) * d;
         vy += Math.cos(br) * d;
         count++;
     }
     if (count === 0) return null;
-    const hdg = (Math.atan2(vx, vy) * 180 / Math.PI + 360) % 360; // back to deg, 0=N
+    const hdg = (Math.atan2(vx, vy) * 180 / Math.PI + 360) % 360;
     return hdg;
+}
+
+// Blend two angles (degrees) using vector average to handle wrap-around.
+function blendAngles(prevDeg, newDeg, alpha = HDG_ALPHA) {
+    if (prevDeg == null || Number.isNaN(prevDeg)) return newDeg;
+    const pr = (prevDeg * Math.PI) / 180;
+    const nr = (newDeg * Math.PI) / 180;
+    const wPrev = 1 - alpha;
+    const wNew = alpha;
+    const vx = Math.sin(pr) * wPrev + Math.sin(nr) * wNew;
+    const vy = Math.cos(pr) * wPrev + Math.cos(nr) * wNew;
+    return (Math.atan2(vx, vy) * 180 / Math.PI + 360) % 360;
 }
 
 /** =========================
  *  Store
  *  ========================= */
 export const useDroneStore = create((set, get) => ({
-    // id -> { id, reg, props, history: [{coord:[lng,lat], ts, altitude?}], color, firstSeen, lastSeen }
+    // id -> { id, reg, props, history, color, firstSeen, lastSeen, hdg? }
     drones: {},
     selectedId: null,
 
@@ -139,6 +153,7 @@ export const useDroneStore = create((set, get) => ({
                     color: nextColor,
                     firstSeen: now,
                     lastSeen: now,
+                    hdg: null, // computed when we get a 2nd point
                 };
                 pointsDirty = true;
                 linesDirty = true;
@@ -163,6 +178,12 @@ export const useDroneStore = create((set, get) => ({
                     });
                     if (hist.length > MAX_HISTORY) {
                         hist.splice(0, hist.length - MAX_HISTORY);
+                    }
+                    // Update smoothed heading if segment is long enough
+                    const segDist = last ? distMeters(last.coord, [lng, lat]) : 0;
+                    if (last && segDist >= HDG_MIN_SEG_M) {
+                        const segHdg = bearingDeg(last.coord, [lng, lat]);
+                        existing.hdg = blendAngles(existing.hdg, segHdg, HDG_ALPHA);
                     }
                     pointsDirty = true;
                     if (canFly(existing.reg ?? existing.props?.registration ?? p.registration)) {
@@ -208,8 +229,8 @@ export const useDroneStore = create((set, get) => ({
             const hist = d.history;
             const last = hist[hist.length - 1];
 
-            // robust heading from path (0..360, 0 = north)
-            const hdg = headingFromHistory(hist);
+            const fallbackHdg = headingFromHistory(hist);
+            const hdg = d.hdg != null ? d.hdg : fallbackHdg;
 
             features.push({
                 type: "Feature",
@@ -220,8 +241,8 @@ export const useDroneStore = create((set, get) => ({
                     color: d.color,
                     firstSeen: d.firstSeen,
                     lastSeen: d.lastSeen,
-                    hdg,                // <— map uses this for rotation
-                    ...d.props,         // keep server props (yaw/altitude/Name/etc.)
+                    hdg,                // <- used by the map for rotation
+                    ...d.props,
                 },
             });
         }

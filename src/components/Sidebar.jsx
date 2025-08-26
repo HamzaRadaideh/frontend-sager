@@ -1,44 +1,59 @@
-import { useMemo } from "react";
-import { useDroneStore } from "../store/droneStore";
+// components/SideBar.jsx
+import dashboardIcon from "../assets/dashboard-svgrepo-com-2.svg";
+import mapIcon from "../assets/location-svgrepo-com-2.svg";
 
-export default function Sidebar() {
-  const drones = useDroneStore((s) => s.drones);
-  const selectedId = useDroneStore((s) => s.selectedId);
-  const select = useDroneStore((s) => s.select);
-
-  const list = useMemo(() => Object.values(drones), [drones]);
+export default function SideBar() {
+  const itemBase = {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "12px 14px",
+    color: "#c7ccd6",
+    fontSize: 13,
+    borderRadius: 10,
+    cursor: "pointer",
+  };
 
   return (
-    <aside style={{ width: 320, background: "#1f2937", color: "white", padding: 12, overflowY: "auto" }}>
-      <h2 style={{ margin: "6px 8px 12px", fontSize: 14, letterSpacing: 1 }}>DRONE FLYING</h2>
-      {list.map((d) => {
-        const isSel = d.id === selectedId;
-        return (
-          <div
-            key={d.id}
-            onClick={() => select(d.id)}
-            style={{
-              cursor: "pointer",
-              background: isSel ? "#374151" : "transparent",
-              borderRadius: 8,
-              padding: 10,
-              marginBottom: 8,
-              border: "1px solid #374151",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <strong>{d.props?.Name || "Drone"}</strong>
-              <span style={{ width: 10, height: 10, borderRadius: "50%", background: d.color }} />
-            </div>
-            <div style={{ fontSize: 12, opacity: 0.9, marginTop: 6 }}>
-              <div>Serial # {d.props?.serial}</div>
-              <div>Registration # {d.props?.registration}</div>
-              <div>Pilot {d.props?.pilot}</div>
-              <div>Organization {d.props?.organization}</div>
-            </div>
-          </div>
-        );
-      })}
+    <aside
+      style={{
+        width: 220,
+        background: "#0e1116",         // matte black
+        color: "white",
+        padding: 16,
+        borderRight: "1px solid #1b2130",
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+
+      {/* Nav items */}
+      <div
+        style={{ ...itemBase, background: "transparent" }}
+        onClick={() => alert("Dashboard placeholder")}
+      >
+        <img src={dashboardIcon} width={18} height={18} alt="dashboard" />
+        <span>Dashboard</span>
+      </div>
+
+      <div
+        style={{
+          ...itemBase,
+          background: "#151a22",
+          color: "white",
+          boxShadow: "inset 0 0 0 1px #262e3f",
+        }}
+        // you’re already on the Map page
+      >
+        <img src={mapIcon} width={18} height={18} alt="map" />
+        <span>Map</span>
+      </div>
+
+      <div style={{ flex: 1 }} />
+
+      {/* tiny footer */}
+      <div style={{ opacity: 0.6, fontSize: 11 }}>© Sager</div>
     </aside>
   );
 }

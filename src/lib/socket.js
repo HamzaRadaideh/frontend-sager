@@ -1,3 +1,4 @@
+// lib/socket.js
 import { io } from "socket.io-client";
 import { useDroneStore } from "../store/droneStore";
 

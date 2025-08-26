@@ -1,7 +1,6 @@
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import DroneMap from "./components/DroneMap";
-import RedCounter from "./components/RedCounter";
 
 export default function App() {
   return (
@@ -13,7 +12,6 @@ export default function App() {
           <DroneMap />
         </div>
       </div>
-      <RedCounter />
     </div>
   );
 }
