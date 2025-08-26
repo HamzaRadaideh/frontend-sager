@@ -32,7 +32,6 @@ export default function DroneMap() {
   const { handleMove, handleEnter, handleLeave, cleanup } = useMapPopup();
 
   useEffect(() => {
-    startSocket();
 
     const m = new mapboxgl.Map({
       container: mapRef.current,

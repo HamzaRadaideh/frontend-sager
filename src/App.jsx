@@ -1,12 +1,17 @@
-// App.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from "./components/layout/Header";
 import Sidebar from "./components/sidebar/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Map from "./pages/Map";
+import { startSocket } from "./lib/socket"; // Add this import
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState('/');
+
+  // Start WebSocket connection when app mounts
+  useEffect(() => {
+    startSocket();
+  }, []);
 
   const handleNavigate = (path) => {
     setCurrentPath(path);
