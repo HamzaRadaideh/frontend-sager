@@ -1,4 +1,4 @@
-// components/sidebar/FloatingSideBar.jsx
+// components/sidebar/FloatingSideBar.tsx
 import { useMemo } from "react";
 import { useDroneStore } from "../../store/droneStore";
 

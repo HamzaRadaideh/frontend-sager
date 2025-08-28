@@ -1,4 +1,4 @@
-// pages/Dashboard.jsx
+// pages/Dashboard.tsx
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { useDroneStore } from '../store/droneStore';

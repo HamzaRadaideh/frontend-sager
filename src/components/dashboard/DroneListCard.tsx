@@ -1,12 +1,11 @@
-// components/dashboard/DroneListCard.jsx
-const formatTime = (seconds) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-};
+import type { DronesMap, Drone } from '../../types';
+import { formatTime } from '../../utils/dashboardUtils';
 
-export default function DroneListCard({ drones }) {
+type Props = { drones: DronesMap };
+
+export default function DroneListCard({ drones }: Props) {
+  const list: Drone[] = Object.values(drones);
+
   return (
     <div style={{
       background: '#10151c',
@@ -19,13 +18,13 @@ export default function DroneListCard({ drones }) {
         <div style={{ fontSize: 14, fontWeight: 600, opacity: 0.9 }}>Active Drones</div>
       </div>
       <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-        {Object.values(drones).map((drone, idx) => {
+        {list.map((drone, idx) => {
           const flightTime = (Date.now() - drone.firstSeen) / 1000;
           const isFlying = drone.color === '#22c55e';
           return (
             <div key={drone.id} style={{
               padding: 16,
-              borderBottom: idx < Object.values(drones).length - 1 ? '1px solid #1a1f2e' : 'none',
+              borderBottom: idx < list.length - 1 ? '1px solid #1a1f2e' : 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'

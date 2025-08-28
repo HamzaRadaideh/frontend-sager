@@ -1,5 +1,8 @@
-// components/counters/counterStyles.js
-export const counterStyles = {
+// components/counters/counterStyles.ts
+import type { CSSProperties } from 'react';
+
+
+export const counterStyles: { pill: CSSProperties; badge: CSSProperties } = {
     pill: {
         display: "inline-flex",
         alignItems: "center",

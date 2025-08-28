@@ -1,7 +1,7 @@
-// components/map/MapLayers.js
-import { MAP_CONFIG } from '../../utils/constants.js';
+// components/map/MapLayers.ts
+import { MAP_CONFIG } from '../../utils/constants';
 
-export function addMapLayers(map) {
+export function addMapLayers(map: mapboxgl.Map) {
     // Tracks layer
     map.addLayer({
         id: "tracks",

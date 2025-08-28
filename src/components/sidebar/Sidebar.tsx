@@ -1,8 +1,13 @@
-// components/sidebar/Sidebar.jsx
+// components/sidebar/Sidebar.tsx
 import dashboardIcon from "../../assets/dashboard-svgrepo-com-2.svg";
 import mapIcon from "../../assets/location-svgrepo-com-2.svg";
 
-export default function Sidebar({ currentPath, onNavigate }) {
+type Props = {
+  currentPath: string;
+  onNavigate: (path: string) => void;
+};
+
+export default function Sidebar({ currentPath, onNavigate }: Props) {
   const itemBase = {
     display: "flex",
     alignItems: "center",
@@ -22,9 +27,10 @@ export default function Sidebar({ currentPath, onNavigate }) {
     boxShadow: "inset 0 0 0 1px #262e3f",
   };
 
-  const handleNavigation = (path) => {
+    const handleNavigation = (path: string) => {
     onNavigate(path);
-  };
+    };
+
 
   return (
     <aside
@@ -44,12 +50,12 @@ export default function Sidebar({ currentPath, onNavigate }) {
         onClick={() => handleNavigation('/')}
         onMouseEnter={(e) => {
           if (currentPath !== '/') {
-            e.target.style.background = "#151a2250";
+            e.currentTarget.style.background = "#151a2250";
           }
         }}
         onMouseLeave={(e) => {
           if (currentPath !== '/') {
-            e.target.style.background = "transparent";
+            e.currentTarget.style.background = "transparent";
           }
         }}
       >
@@ -62,12 +68,12 @@ export default function Sidebar({ currentPath, onNavigate }) {
         onClick={() => handleNavigation('/map')}
         onMouseEnter={(e) => {
           if (currentPath !== '/map') {
-            e.target.style.background = "#151a2250";
+            e.currentTarget.style.background = "#151a2250";
           }
         }}
         onMouseLeave={(e) => {
           if (currentPath !== '/map') {
-            e.target.style.background = "transparent";
+            e.currentTarget.style.background = "transparent";
           }
         }}
       >

@@ -1,4 +1,4 @@
-// components/counters/GreenCounter.jsx
+// components/counters/GreenCounter.tsx
 import { useEffect, useState } from "react";
 import { useDroneStore } from "../../store/droneStore";
 import { counterStyles } from "./counterStyles";

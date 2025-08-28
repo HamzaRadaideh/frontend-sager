@@ -1,4 +1,4 @@
-// components/counters/RedCounter.jsx
+// components/counters/RedCounter.tsx
 import { useEffect, useState } from "react";
 import { useDroneStore } from "../../store/droneStore";
 import { counterStyles } from "./counterStyles";

@@ -1,4 +1,4 @@
-// pages/Map.jsx
+// pages/Map.tsx
 import DroneMap from '../components/map/DroneMap';
 
 export default function Map() {

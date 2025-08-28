@@ -1,6 +1,7 @@
-// components/map/DroneMap.jsx
+// components/map/DroneMap.tsx
 import { useEffect, useRef } from "react";
-import mapboxgl from "mapbox-gl";
+import mapboxgl, { Map } from 'mapbox-gl';
+import type { GeoJSONSource } from 'mapbox-gl';
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useDroneStore } from "../../store/droneStore";
 import { MAP_CONFIG } from "../../utils/constants";
@@ -11,16 +12,17 @@ import { addMapLayers } from "./MapLayers";
 import FloatingSideBar from "../sidebar/FloatingSideBar";
 import GreenCounter from "../counters/GreenCounter";
 import RedCounter from "../counters/RedCounter";
+import type { DronesLinesFC, DronesPointsFC } from "../../types";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export default function DroneMap() {
-  const mapRef = useRef(null);
-  const map = useRef(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const map = useRef<Map | null>(null);
   const pushingRef = useRef(false);
-  const lastPointsRef = useRef(null);
-  const lastLinesRef = useRef(null);
-  const lastSelectedRef = useRef(null);
+  const lastPointsRef = useRef<DronesPointsFC | null>(null);
+  const lastLinesRef = useRef<DronesLinesFC | null>(null);
+  const lastSelectedRef = useRef<string | null>(null);
 
   const getPoints = useDroneStore((s) => s.getPoints);
   const getLines = useDroneStore((s) => s.getLines);
@@ -31,19 +33,17 @@ export default function DroneMap() {
   const { handleMove, handleEnter, handleLeave, cleanup } = useMapPopup();
 
   useEffect(() => {
-
+    if (!mapRef.current) return;
     const m = new mapboxgl.Map({
       container: mapRef.current,
       style: MAP_CONFIG.STYLE_URL,
       center: [35.9313, 31.9488],
-      zoom: 12,
-      attributionControl: false,
+      zoom: 12
     });
     map.current = m;
 
     m.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "top-right");
 
-    // Add user interaction listeners
     m.on("dragstart", markUserAction);
     m.on("zoomstart", markUserAction);
     m.on("rotatestart", markUserAction);
@@ -52,9 +52,7 @@ export default function DroneMap() {
     const reapplySelectedState = () => {
       const id = lastSelectedRef.current;
       if (!id) return;
-      try { 
-        m.setFeatureState({ source: "tracks", id }, { selected: true }); 
-      } catch {}
+      try { m.setFeatureState({ source: "tracks", id }, { selected: true }); } catch {}
     };
 
     m.on("load", async () => {
@@ -68,52 +66,49 @@ export default function DroneMap() {
 
       addMapLayers(m);
 
-      // Add popup handlers
       ["drones", "drones-selected"].forEach((layer) => {
         m.on("mouseenter", layer, handleEnter(m));
         m.on("mousemove", layer, handleMove(m));
         m.on("mouseleave", layer, handleLeave(m));
       });
 
-      // Add click handler
       m.on("click", "drones", (e) => {
         const f = e.features?.[0];
-        const id = f?.properties?.id;
+        const id = f?.properties?.id as string | undefined;
         if (id) select(id);
       });
 
       reapplySelectedState();
     });
 
-    // Store subscription for data updates
     const unsub = useDroneStore.subscribe(() => {
-      const m = map.current;
-      if (!m || !m.isStyleLoaded() || pushingRef.current) return;
+    const m = map.current;
+    if (!m || !m.isStyleLoaded?.() || pushingRef.current) return;
+
       pushingRef.current = true;
 
       requestAnimationFrame(() => {
         const pts = getPoints();
         const lns = getLines();
 
-        // Update sources if data changed
         if (lastPointsRef.current !== pts) {
-          m.getSource("drones")?.setData(pts);
+          const src = m.getSource("drones") as GeoJSONSource | undefined;
+          src?.setData(pts as any);
           lastPointsRef.current = pts;
         }
         if (lastLinesRef.current !== lns) {
-          m.getSource("tracks")?.setData(lns);
+          const src = m.getSource("tracks") as GeoJSONSource | undefined;
+          src?.setData(lns as any);
           lastLinesRef.current = lns;
         }
 
-        // Reapply selection state
         const id = lastSelectedRef.current;
         if (id) {
           try { m.setFeatureState({ source: "tracks", id }, { selected: true }); } catch {}
           try { m.setFilter("drones-selected", ["==", ["get", "id"], id]); } catch {}
         }
 
-        // Follow selected drone
-        followDrone(m, id, pts);
+        followDrone(m, id ?? null, pts);
         pushingRef.current = false;
       });
     });
@@ -129,7 +124,6 @@ export default function DroneMap() {
     };
   }, []);
 
-  // Handle selection changes
   useEffect(() => {
     const m = map.current;
     if (!m) return;
@@ -147,7 +141,6 @@ export default function DroneMap() {
       if (selectedId) m.setFeatureState({ source: "tracks", id: selectedId }, { selected: true });
     } catch {}
 
-    // Fly to newly selected drone
     if (selectedId) {
       flyToInitial(m, selectedId, getPoints());
     }
@@ -156,11 +149,9 @@ export default function DroneMap() {
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <div ref={mapRef} style={{ position: "absolute", inset: 0 }} />
-      
       <div style={{ position: "absolute", top: 16, left: 16, zIndex: 5 }}>
         <FloatingSideBar />
       </div>
-
       <div
         style={{
           position: "absolute",
@@ -176,5 +167,5 @@ export default function DroneMap() {
         <RedCounter />
       </div>
     </div>
-  )
+  );
 }

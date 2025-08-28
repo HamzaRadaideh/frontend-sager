@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
@@ -19,40 +23,4 @@ body {
     place-items: center;
     min-width: 320px;
     min-height: 100vh;
-}
-
-
-/* Dark popup theme */
-.mapboxgl-popup.sager-popup .mapboxgl-popup-content {
-    background: #111827;
-    /* slate-900 */
-    color: #ffffff;
-    border-radius: 10px;
-    padding: 10px 12px;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, .35);
-}
-
-/* Ensure the little arrow matches the dark background (top/bottom anchors) */
-.mapboxgl-popup.sager-popup .mapboxgl-popup-tip {
-    border-top-color: #111827 !important;
-    border-bottom-color: #111827 !important;
-}
-
-/* Inner content layout */
-.sager-popup-card {
-    min-width: 200px;
-    font: 13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
-
-.sager-popup-title {
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-.sager-popup-grid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 6px 14px;
-    font-size: 12px;
-    opacity: 0.95;
 }

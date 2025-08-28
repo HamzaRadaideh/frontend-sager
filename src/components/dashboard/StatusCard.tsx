@@ -1,5 +1,13 @@
-// components/dashboard/StatusCard.jsx
-export default function StatusCard({ title, value, subtitle, icon, color = '#22c55e', trend }) {
+import { ReactNode } from 'react';
+
+type Trend = { type: 'up' | 'down'; value: string };
+
+type Props = {
+  title: ReactNode; value: ReactNode; subtitle?: ReactNode;
+  icon?: ReactNode; color?: string; trend?: Trend;
+};
+
+export default function StatusCard({ title, value, subtitle, icon, color = '#22c55e', trend }: Props) {
   return (
     <div style={{
       background: '#10151c',
@@ -17,13 +25,13 @@ export default function StatusCard({ title, value, subtitle, icon, color = '#22c
       <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 4 }}>{value}</div>
       {subtitle && <div style={{ fontSize: 12, opacity: 0.6 }}>{subtitle}</div>}
       {trend && (
-        <div style={{ 
-          position: 'absolute', 
-          top: 12, 
-          right: 12, 
-          fontSize: 11, 
-          padding: '2px 6px', 
-          borderRadius: 4, 
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          fontSize: 11,
+          padding: '2px 6px',
+          borderRadius: 4,
           background: trend.type === 'up' ? '#22c55e20' : '#ef444420',
           color: trend.type === 'up' ? '#22c55e' : '#ef4444'
         }}>

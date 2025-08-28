@@ -1,4 +1,4 @@
-// components/layout/Header.jsx
+// components/layout/Header.tsx
 import bellIcon from "../../assets/bell.svg";
 import langIcon from "../../assets/language-svgrepo-com.svg";
 import captureIcon from "../../assets/capture-svgrepo-com.svg";

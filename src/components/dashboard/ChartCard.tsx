@@ -1,5 +1,9 @@
-// components/dashboard/ChartCard.jsx
-export default function ChartCard({ title, children, height = 300 }) {
+// components/dashboard/ChartCard.tsx
+
+import { ReactNode } from 'react';
+type Props = { title: ReactNode; children: ReactNode; height?: number };
+
+export default function ChartCard({ title, children, height = 300 }: Props) {
   return (
     <div style={{
       background: '#10151c',

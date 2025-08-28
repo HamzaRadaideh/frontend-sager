@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type SetStateAction } from 'react';
 import Header from "./components/layout/Header";
 import Sidebar from "./components/sidebar/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Map from "./pages/Map";
-import { startSocket } from "./lib/socket"; // Add this import
+import { startSocket } from "./lib/socket";
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState('/');
@@ -13,7 +13,7 @@ export default function App() {
     startSocket();
   }, []);
 
-  const handleNavigate = (path) => {
+  const handleNavigate = (path: SetStateAction<string>) => {
     setCurrentPath(path);
   };
 
